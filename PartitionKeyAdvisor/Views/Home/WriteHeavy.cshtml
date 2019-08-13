@@ -1,0 +1,624 @@
+﻿@using Newtonsoft.Json
+@{
+    ViewData["Title"] = "WriteHeavy";
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+}
+
+<script src="myscript.js"></script>
+
+<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/css/dataTables.bootstrap.min.css" rel="stylesheet" />
+<link href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css" rel="stylesheet" />
+
+
+@{
+    Dictionary<string, double> dataDictionary = ViewData["DataDictionary"] as Dictionary<string, double>;
+    List<Dictionary<string, int>> listOfDictionaries = ViewData["listOfDocumentDictionaries"] as List<Dictionary<string, int>>;
+    List<Dictionary<string, int>> listOfDistinctValues = ViewData["listOfDistinctValues"] as List<Dictionary<string, int>>;
+    var storageResults = ViewData["storageResults"] as double[];
+    var overallUniquenessResult = ViewData["OverallUniquenessResult"] as double[];
+    var distinctValuesRecommendationResults = ViewData["RecommendationResultsDistinctValues"] as double[];
+    var RecommendationResults = ViewData["RecommendationResults"] as double[];
+
+    var max = dataDictionary.Values.Max();
+    var min = dataDictionary.Values.Take(dataDictionary.Count - 5).Min();
+
+    var maxRecResults = storageResults.Max();
+    var minRecResults = storageResults.Min();
+
+    var maxDistinctValues = distinctValuesRecommendationResults.Max();
+    var minDistinctValues = distinctValuesRecommendationResults.Min();
+
+    var maxOverallDistinctness = overallUniquenessResult.Max();
+    var minOverallDistinctness = overallUniquenessResult.Min();
+
+    var recommendation = RecommendationResults.Max();
+    var filterArray = ViewData["filterArray"] as string[];
+}
+
+<h2>Partition Key Recommendation</h2>
+
+<p><small>All recommendations are based on current data set and input values</small></p>
+
+
+<div class=" container">
+    <table class="table finalRecommendation  table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">Our Recommended Partition Key </th>
+                <th scope="col">Highest Workload Score Calculated (w1*uniformity_score + w1*total_uniqueness_score + w2*distinctness_second)</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var final = RecommendationResults.Zip(filterArray, (f, r) => new { Filter = f, Recommendation = r });
+            }
+
+            @foreach (var fr in final)
+            {
+                if (fr.Filter == recommendation)
+                {
+
+                    <tr>
+                        <td>@fr.Recommendation</td>
+                        <td>@recommendation %</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+<br />
+
+
+<br />
+<h2>Storage Distribution</h2>
+<small><p>Good partition keys should have a uniform and even storage distribution graph.</p></small>
+
+
+<Select class="browser-default custom-select" id="selectedPartitionKey" name="selectedPartitionKey">
+    @{
+        <option value="" selected>Choose which partition key distribution to display.</option>
+
+        for (var i = 0; i < filterArray.Length; i++)
+        {
+            <option value=@i>@filterArray[i]</option>
+        }
+
+    }
+</Select>
+
+<br />
+
+<div class="shadow" id="0" style="display:none;">
+    <div class="card">
+        <div class="card-header">Key: /@filterArray[0]</div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="myChart" width="350" height="350"></canvas>
+                <script>
+
+            var xvalues = @Html.Raw(JsonConvert.SerializeObject(listOfDictionaries.ElementAt(0).Keys.ToArray()));
+            var yvalues = @Html.Raw(JsonConvert.SerializeObject(listOfDictionaries.ElementAt(0).Values.ToArray()));
+
+            var ctx = document.getElementById('myChart');
+            ctx.height = 120;
+            var randomColorPlugin = {
+
+
+            beforeUpdate: function(myChart) {
+            var backgroundColor = [];
+            var borderColor = [];
+
+            for (var i = 0; i < myChart.config.data.datasets[0].data.length; i++) {
+            var color = "rgba(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ",";
+            backgroundColor.push(color + "0.2)");
+            borderColor.push(color + "1)");
+            }
+
+
+            myChart.config.data.datasets[0].backgroundColor = backgroundColor;
+            myChart.config.data.datasets[0].borderColor = borderColor;
+            }
+            };
+
+
+            Chart.pluginService.register(randomColorPlugin);
+
+            var randomColorGenerator = function () {
+            return '#' + (Math.random().toString(16) + '0000000');
+            };
+
+            var myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+            labels: xvalues,
+            datasets: [{
+                label: 'Frequency',
+                data: yvalues,
+                borderWidth: 1
+                }]
+            },
+
+            options: {
+                title: {
+                display: false,
+                text: 'Candidate Partition Key: '+ '@filterArray[0]',
+                fontSize: '25',
+                fontFamily: "'Roboto', sans-serif",
+                fontColor: '#000'
+
+                },
+                scales: {
+                    xAxes: [ {
+                    scaleLabel: {
+                         display: true,
+                        labelString: '@filterArray[0]'
+                    }
+            }],
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        suggestedMax: 5
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Frequency'
+                    }
+                }]
+                }
+                }
+            });
+
+                </script>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br />
+<div class="shadow" id="1" style="display:none;">
+    <div class="card">
+        <div class="card-header">Key: /@filterArray[1]</div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="myChart1" width="350" height="350"></canvas>
+                <script>
+
+            var xvalues = @Html.Raw(JsonConvert.SerializeObject(listOfDictionaries.ElementAt(1).Keys.ToArray()));
+            var yvalues = @Html.Raw(JsonConvert.SerializeObject(listOfDictionaries.ElementAt(1).Values.ToArray()));
+
+            var ctx = document.getElementById('myChart1');
+            ctx.height = 120;
+            var randomColorPlugin = {
+
+
+            beforeUpdate: function(myChart1) {
+            var backgroundColor = [];
+            var borderColor = [];
+
+            for (var i = 0; i < myChart1.config.data.datasets[0].data.length; i++) {
+            var color = "rgba(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ",";
+            backgroundColor.push(color + "0.2)");
+            borderColor.push(color + "1)");
+            }
+
+
+            myChart1.config.data.datasets[0].backgroundColor = backgroundColor;
+            myChart1.config.data.datasets[0].borderColor = borderColor;
+            }
+            };
+
+
+            Chart.pluginService.register(randomColorPlugin);
+
+            var randomColorGenerator = function () {
+            return '#' + (Math.random().toString(16) + '0000000');
+            };
+
+            var myChart1 = new Chart(ctx, {
+            type: 'bar',
+            data: {
+            labels: xvalues,
+            datasets: [{
+                label: 'Frequency',
+                data: yvalues,
+                borderWidth: 1
+                }]
+            },
+
+            options: {
+                title: {
+                display:false,
+                text: 'Candidate Partition Key: '+ '@filterArray[1]',
+                fontSize: '25',
+                fontFamily: "'Roboto', sans-serif",
+                fontColor: '#000'
+
+                },
+                scales: {
+                 xAxes: [ {
+                    scaleLabel: {
+                         display: true,
+                        labelString: '@filterArray[1]'
+                    }
+            }],
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        suggestedMax: 5
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Frequency'
+                    }
+                }]
+                }
+                }
+            });
+
+                </script>
+            </div>
+        </div>
+    </div>
+</div>
+
+<br />
+<div class="shadow" id="2" style="display:none;">
+    <div class="card">
+        <div class="card-header">Key: /@filterArray[2]</div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="myChart2" width="350" height="350"></canvas>
+                <script>
+
+            var xvalues = @Html.Raw(JsonConvert.SerializeObject(listOfDictionaries.ElementAt(2).Keys.ToArray()));
+            var yvalues = @Html.Raw(JsonConvert.SerializeObject(listOfDictionaries.ElementAt(2).Values.ToArray()));
+
+            var ctx = document.getElementById('myChart2');
+            ctx.height = 120;
+            var randomColorPlugin = {
+
+
+            beforeUpdate: function(myChart2) {
+            var backgroundColor = [];
+            var borderColor = [];
+
+            for (var i = 0; i < myChart2.config.data.datasets[0].data.length; i++) {
+            var color = "rgba(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ",";
+            backgroundColor.push(color + "0.2)");
+            borderColor.push(color + "1)");
+            }
+
+
+            myChart2.config.data.datasets[0].backgroundColor = backgroundColor;
+            myChart2.config.data.datasets[0].borderColor = borderColor;
+            }
+            };
+
+
+            Chart.pluginService.register(randomColorPlugin);
+
+            var randomColorGenerator = function () {
+            return '#' + (Math.random().toString(16) + '0000000');
+            };
+
+            var myChart2 = new Chart(ctx, {
+            type: 'bar',
+            data: {
+            labels: xvalues,
+                datasets: [{
+                display: false,
+                label: 'Frequency',
+                data: yvalues,
+                borderWidth: 1
+                }]
+            },
+
+            options: {
+                title: {
+                display: false,
+                text: 'Candidate Partition Key: '+ '@filterArray[2]',
+                fontSize: '25',
+                fontFamily: "'Roboto', sans-serif",
+                fontColor: '#000'
+
+                },
+                scales: {
+                 xAxes: [ {
+                    scaleLabel: {
+                         display: true,
+                        labelString: '@filterArray[2]'
+                    }
+            }],
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        suggestedMax: 5
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: 'Frequency'
+                    }
+                }]
+                }
+                }
+            });
+
+                </script>
+            </div>
+        </div>
+    </div>
+</div>
+<br />
+<br />
+
+<h2>Analysis: Storage Distribution Uniformity</h2>
+<h6><small>Calculates how uniform the distribution graph is for every candidate key. (High Percentage = Good Uniformity)</small></h6>
+<div class=" container">
+    <table class="table recommendation table-bordered table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Candidate Partition Key</th>
+                <th scope="col">Storage Uniformity Percentage</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var combination = storageResults.Zip(filterArray, (f, r) => new { Filter = f, Recommendation = r });
+            }
+
+            @foreach (var fr in combination) {
+                string colorClass = "table-default";
+                if (fr.Filter.Equals(maxRecResults)) {
+                    colorClass = "table-success";
+                }
+                else if (fr.Filter.Equals(minRecResults)) { 
+                    colorClass = "table-danger";
+                }
+                else {
+                    colorClass = "table-default";
+                }
+                <tr class="@colorClass">
+                    <td>@fr.Recommendation</td>
+                    <td>@fr.Filter %</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<br />
+<br />
+
+<h2>Total Uniqueness per Key</h2>
+
+<small>Outputs the cardinality of each property in a collection item. Partition keys with a high number of unique values are best because it helps to better distribute your workload evenly across all items.</small>
+
+<br />
+
+<div class=" container">
+    <table class="table cardinality table-bordered table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Property</th>
+                <th scope="col"># of Unique Values</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in dataDictionary.Take(dataDictionary.Count - 5)){
+                string colorClass = "table-default";
+                if (item.Value.Equals(max)) {
+                    colorClass = "table-success";
+                }
+                else if (item.Value.Equals(min)) {
+                    colorClass = "table-danger";
+                }
+                else {
+                    colorClass = "table-default";
+                }
+                <tr class="@colorClass">
+                    <td>@item.Key</td>
+                    <td>@item.Value</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<br />
+<br />
+
+<h3>Analysis: Total Uniqueness per Key</h3>
+<h6><small>Calculates how uniform the distribution graph is for every candidate key. (High Percentage = Good Uniformity)</small></h6>
+<div class=" container">
+    <table class="table recommendation table-bordered table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Candidate Partition Key</th>
+                <th scope="col">Storage </th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var combination1 = overallUniquenessResult.Zip(filterArray, (f, r) => new { Filter = f, Recommendation = r });
+
+            }
+            @foreach (var fr in combination1) {
+                string colorClass = "table-default";
+                if (fr.Filter.Equals(maxOverallDistinctness)) {
+                    colorClass = "table-success";
+                }
+                else if (fr.Filter.Equals(minOverallDistinctness)) {
+                    colorClass = "table-danger";
+                }
+                else {
+                    colorClass = "table-default";
+                }
+                <tr class="@colorClass">
+                    <td>@fr.Recommendation </td>
+                    <td>@fr.Filter %</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<br />
+<br />
+
+<h3>Distinctness per second Distribution</h3>
+@{ 
+    var line_xvalues = @Html.Raw(JsonConvert.SerializeObject(listOfDistinctValues.ElementAt(0).Keys.ToArray()));
+    var line_yvalues = @Html.Raw(JsonConvert.SerializeObject(listOfDistinctValues.ElementAt(0).Values.ToArray()));
+    var line_yvalues2 = @Html.Raw(JsonConvert.SerializeObject(listOfDistinctValues.ElementAt(1).Values.ToArray()));
+    var line_yvalues3 = @Html.Raw(JsonConvert.SerializeObject(listOfDistinctValues.ElementAt(2).Values.ToArray()));
+
+<canvas id="myChart5" width="200" height=""></canvas>
+<script>
+     
+    var ctx5 = document.getElementById('myChart5');
+    var myChart5 = new Chart(ctx5, {
+        type: 'line',
+        data: {
+            labels: @line_xvalues,
+            labelString: 'probability',
+            datasets: [{
+                label: '@filterArray[0]',
+                data: @line_yvalues,
+                backgroundColor: "rgba(255, 99, 132, 0.2)",
+                fill: false
+            }, {
+                label: '@filterArray[1]',
+                data: @line_yvalues2,
+                backgroundColor: "rgba(54, 162, 235, 0.2)",
+                fill: false
+            }, {
+
+                label: '@filterArray[2]',
+                data: @line_yvalues3,
+                backgroundColor: "rgba(255, 99, 132, 0.2)",
+                fill: false
+                }
+            ]
+        },
+                    options: {
+                title: {
+                display: false,
+                text: 'Candidate Partition Key: '+ '@filterArray[2]',
+                fontSize: '25',
+                fontFamily: "'Roboto', sans-serif",
+                fontColor: '#000'
+
+                },
+                scales: {
+                 xAxes: [ {
+                    scaleLabel: {
+                         display: true,
+                        labelString: '_ts (Seconds)'
+                    }
+            }],
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        suggestedMax: 5
+                    },
+                    scaleLabel: {
+                        display: true,
+                        labelString: '# of Unique Values'
+                    }
+                }]
+                }
+                }
+    });
+</script>
+    }
+
+
+<br />
+<br />
+
+<h3>Analysis: Distinctness per second</h3>
+<h6><small>Calculates how distinct your values are over one second intervals. This helps filter out candidate keys with low cardinality per second. (High Percentage = Good Distinctness/Second)</small></h6>
+<div class=" container">
+    <table class="table recommendation table-bordered table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Candidate PartitionKey</th>
+                <th scope="col">Distinctness/second percentage</th>
+            </tr>
+        </thead>
+        <tbody>
+            @{
+                var combinationArray = distinctValuesRecommendationResults.Zip(filterArray, (f, r) => new { Filter = f, Recommendation = r });
+            }
+
+            @foreach (var fr in combinationArray)
+            {
+                string colorClass = "table-default";
+                if (fr.Filter.Equals(maxDistinctValues))
+                {
+                    colorClass = "table-success";
+                }
+                else if (fr.Filter.Equals(minDistinctValues))
+                {
+                    colorClass = "table-danger";
+                }
+                else
+                {
+                    colorClass = "table-default";
+                }
+                <tr class="@colorClass">
+                    <td>@fr.Recommendation</td>
+                    <td>@fr.Filter %</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<br />
+
+<p>Would you like to migrate your data to another collection with a new partition key? Cosmos DB Container Migration Tool Coming Soon .</p>
+<br />
+<br />
+<br />
+<br />
+<br />
+
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src=" https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.3.1/js/bootstrap.bundle.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap4.min.js"></script>
+
+
+<script>
+
+    $('.cardinality').DataTable({
+        "paging": true,
+        "bInfo": false,
+        "order": [[1, 'desc']]
+    });
+    $('.recommendation').DataTable({
+        "paging": false,
+        "bFilter": false,
+        "bInfo": false,
+        "order": [[1, 'desc']]
+    });
+    $('.finalRecommendation').DataTable({
+        "paging": false,
+        "bFilter": false,
+        "bInfo": false,
+        "ordering": false
+    });
+    $(function () {
+        $('#selectedPartitionKey').change(function () {
+            $('.shadow').hide();
+            $('#' + $(this).val()).show();
+        });
+    });
+
+</script>

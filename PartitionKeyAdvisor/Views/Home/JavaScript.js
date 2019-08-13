@@ -1,0 +1,3 @@
+﻿('.cardinality').DataTable({
+    "paging": false
+});

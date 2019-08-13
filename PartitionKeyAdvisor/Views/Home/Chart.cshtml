@@ -1,0 +1,328 @@
+﻿@using Newtonsoft.Json
+@model FormModel
+@{
+    ViewData["Title"] = "Chart";
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.8.0/Chart.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-3.4.1.min.js"></script>
+    <script src="myscript.js"></script>
+}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+
+
+
+<h1>Storage Distribution</h1>
+<br />
+<br />
+
+<body>
+    <div class="shadow">
+        <div class="container">
+            <div class="chart-container">
+
+                <h3># of Unique Values: @ViewData["Filter1Dcount"]</h3>
+                <h4>Amount of error of being a uniform distribution: @ViewData["error1"];</h4>
+                <p>*An error number closest to 0 has a perfect uniformly distributed data set.</p>
+                <canvas id="myChart" width="350" height="350"></canvas>
+                <script>
+
+    var capacity = @Html.Raw(JsonConvert.SerializeObject(ViewData["x"]));
+    var capacity1 = @Html.Raw(JsonConvert.SerializeObject(ViewData["y"]));
+
+        var ctx = document.getElementById('myChart');
+        ctx.height = 120;
+        var randomColorPlugin = {
+
+    // We affect the `beforeUpdate` event
+    beforeUpdate: function(myChart) {
+        var backgroundColor = [];
+        var borderColor = [];
+
+        // For every data we have ...
+        for (var i = 0; i < myChart.config.data.datasets[0].data.length; i++) {
+
+            // We generate a random color
+            var color = "rgba(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ",";
+
+            // We push this new color to both background and border color arrays
+            // .. a lighter color is used for the background
+            backgroundColor.push(color + "0.2)");
+            borderColor.push(color + "1)");
+        }
+
+        // We update the chart bars color properties
+        myChart.config.data.datasets[0].backgroundColor = backgroundColor;
+        myChart.config.data.datasets[0].borderColor = borderColor;
+    }
+        };
+
+        // We now register the plugin to the chart's plugin service to activate it
+        Chart.pluginService.register(randomColorPlugin);
+
+  var randomColorGenerator = function () {
+   return '#' + (Math.random().toString(16) + '0000000');
+};
+
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: capacity,
+            datasets: [{
+                label: 'Frequency',
+                data: capacity1,
+                strokeColor: randomColorGenerator(),
+                highlightFill: randomColorGenerator(),
+                highlightStroke: randomColorGenerator(),
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+
+        options: {
+            title: {
+            display: true,
+                text: 'Partition Key: @ViewData["Filter2"]',
+                fontSize: '30',
+                fontFamily: "'Roboto', sans-serif",
+                fontColor: '#000'
+
+             },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        suggestedMax: 5
+                    }
+                }]
+            }
+        }
+    });
+                </script>
+
+            </div>
+        </div>
+    </div>
+
+
+    <br />
+    <br />
+
+    <div class="shadow">
+        <div class="container">
+            <div class="chart-container">
+                <h3># of Unique Values: @ViewData["Filter2Dcount"]</h3>
+                <h4>Amount of error of being a uniform distribution: @ViewData["error2"];</h4>
+                <p>*An error number closest to 0 has a perfect uniformly distributed data set.</p>
+
+                <canvas id="myChart1" width="350" height="350"></canvas>
+                <script>
+
+    var capacity2 = @Html.Raw(JsonConvert.SerializeObject(ViewData["x2"]));
+    var capacity22 = @Html.Raw(JsonConvert.SerializeObject(ViewData["y2"]));
+
+        var ctx = document.getElementById('myChart1');
+        ctx.height = 120;
+        var randomColorPlugin = {
+
+    // We affect the `beforeUpdate` event
+    beforeUpdate: function(myChart1) {
+        var backgroundColor = [];
+        var borderColor = [];
+
+        // For every data we have ...
+        for (var i = 0; i < myChart.config.data.datasets[0].data.length; i++) {
+
+            // We generate a random color
+            var color = "rgba(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ",";
+
+            // We push this new color to both background and border color arrays
+            // .. a lighter color is used for the background
+            backgroundColor.push(color + "0.2)");
+            borderColor.push(color + "1)");
+        }
+
+        // We update the chart bars color properties
+        myChart1.config.data.datasets[0].backgroundColor = backgroundColor;
+        myChart1.config.data.datasets[0].borderColor = borderColor;
+    }
+        };
+
+        // We now register the plugin to the chart's plugin service to activate it
+        //Chart.pluginService.register(randomColorPlugin);
+
+  var randomColorGenerator = function () {
+   return '#' + (Math.random().toString(16) + '0000000');
+};
+
+    var myChart1= new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: capacity2,
+            datasets: [{
+                label: 'Frequency',
+                data: capacity22,
+                strokeColor: randomColorGenerator(),
+                highlightFill: randomColorGenerator(),
+                highlightStroke: randomColorGenerator(),
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+
+        options: {
+            title: {
+            display: true,
+                text: 'Partition Key: @ViewData["Filter1"]',
+                fontSize: '30',
+                fontFamily: "'Roboto', sans-serif",
+                fontColor: '#000'
+
+             },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        suggestedMax: 5
+                    }
+                }]
+            }
+        }
+    });
+                </script>
+
+            </div>
+
+        </div>
+    </div>
+
+
+    <br />
+    <br />
+
+    <div class="shadow">
+        <div class="container">
+            <div class="chart-container">
+                <h3># of Unique Values: @ViewData["Filter3Dcount"]</h3>
+                <h4>Amount of error of being a uniform distribution: @ViewData["error3"];</h4>
+                <p>*An error number closest to 0 has a perfect uniformly distributed data set.</p>
+                <canvas id="myChart2" width="350" height="350"></canvas>
+                <script>
+
+    var capacity3 = @Html.Raw(JsonConvert.SerializeObject(ViewData["x3"]));
+    var capacity33 = @Html.Raw(JsonConvert.SerializeObject(ViewData["y3"]));
+
+        var ctx = document.getElementById('myChart2');
+        ctx.height = 120;
+        var randomColorPlugin = {
+
+    // We affect the `beforeUpdate` event
+    beforeUpdate: function(myChart2) {
+        var backgroundColor = [];
+        var borderColor = [];
+
+        // For every data we have ...
+        for (var i = 0; i < myChart.config.data.datasets[0].data.length; i++) {
+
+            // We generate a random color
+            var color = "rgba(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ",";
+
+            // We push this new color to both background and border color arrays
+            // .. a lighter color is used for the background
+            backgroundColor.push(color + "0.2)");
+            borderColor.push(color + "1)");
+        }
+
+        // We update the chart bars color properties
+        myChart1.config.data.datasets[0].backgroundColor = backgroundColor;
+        myChart1.config.data.datasets[0].borderColor = borderColor;
+    }
+        };
+
+        // We now register the plugin to the chart's plugin service to activate it
+        //Chart.pluginService.register(randomColorPlugin);
+
+  var randomColorGenerator = function () {
+   return '#' + (Math.random().toString(16) + '0000000');
+};
+
+    var myChart1= new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: capacity3,
+            datasets: [{
+                label: 'Frequency',
+                data: capacity33,
+                strokeColor: randomColorGenerator(),
+                highlightFill: randomColorGenerator(),
+                highlightStroke: randomColorGenerator(),
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+
+        options: {
+            title: {
+            display: true,
+                text: 'Partition Key: @ViewData["Filter3"]',
+                fontSize: '30',
+                fontFamily: "'Roboto', sans-serif",
+                fontColor: '#000'
+
+             },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true,
+                        suggestedMax: 5
+                    }
+                }]
+            }
+        }
+    });
+                </script>
+
+            </div>
+
+
+        </div>
+    </div>
+
+    <br />
+    <br />
+    <br />
+    <h1>Throughput Distribution</h1>
+
+    <h5>Query1:</h5>
+    <p>@ViewData["statusQuery1"]</p>
+
+    <h5>Query2:</h5>
+    <p>@ViewData["statusQuery2"]</p>
+
+    <h5>Query3:</h5>
+    <p>@ViewData["statusQuery3"]</p>
+
+
+
+    <table class="table">
+        <tr>
+            <th scope="col">Query</th>
+            <th scope="col">Queries per Second (QPS)</th>
+            <th scope="col">Request Units (RUs)</th>
+        </tr>
+        <tr>
+            <td>@ViewData["statusQuery1"]</td>
+            <td>@ViewData["statusQuery2"]</td>
+            <td>@ViewData["statusQuery3"]</td>
+
+        </tr>
+        
+    </table>
+
+</body>
+
+

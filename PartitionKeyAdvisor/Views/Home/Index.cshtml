@@ -1,0 +1,89 @@
+﻿@{
+    ViewData["Title"] = "Index";
+    <link rel="stylesheet" type="text/css" href="./css/style.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+}
+@model FormModel
+
+<script>
+    function showDiv() {
+        document.getElementById('loadingGif').style.display = "block";
+        setTimeout(function () {
+            document.getElementById('loadingGif').style.display = "none";
+            document.getElementById('showme').style.display = "block";
+        }, 30000);
+
+    }
+</script>
+
+<div class="text-left">
+    <p>This tool advises you on how to choose an adequate partition key based on analytics performed on your data set based on a set of input configurations and test partition key. </p> <br />
+
+
+    <div class="small-middle-container">
+        <h2>Azure Cosmos Account Settings</h2><br/>
+
+        <div class="container1">
+        <form asp-controller="Home" asp-action="WriteHeavy">
+
+            <div class="form-group">
+                <label for="api">API</label>
+                <select class="form-control" id="api">
+                    <option>Core (SQL) </option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="usr">Database URI</label>
+                <input type="text" class="form-control" id="ConnectionString" name="ConnectionString" required>
+            </div>
+            <div class="form-group">
+                <label for="pwd"> Database Account Primary Key</label>
+                <input type="password" class="form-control" id="ReadOnlyKey" name="ReadOnlyKey" required>
+            </div>
+
+            <div class="form-group">
+                <label for="pwd">Database ID</label>
+                <input type="text" class="form-control" id="Database" name="Database" required>
+            </div>
+
+            <div class="form-group">
+                <label for="pwd">Collection ID</label>
+                <input type="text" class="form-control" id="Collection" name="Collection" required>
+            </div>
+            <br />
+            <h2>Workload Type</h2>
+            <br />
+            <label class="radio-inline"><input type="radio" name="optradio"> Write-Heavy</label>
+            <br /><br />
+
+            <h2>Candidate Partition Key</h2><br/>
+            <p> Insert document properties you would like to test as candidate partition keys.</p>
+            <p><small>When choosing a partition key for Write-Heavy workloads, it is important to choose a key with a high number of unique values, good overall storage distribution, and good distribution of unique values per second.</small></p>
+
+            <div class="form-group">
+                <label for="usr">Candidate Key 1</label>
+                <input type="text" placeholder="ex. make_id" class="form-control" id="Filter1" name="Filter1" required>
+            </div>
+            <div class="form-group">
+                <label for="pwd">Candidate Key 2</label>
+                <input type="text"  placeholder="ex. make_country" class="form-control" id="Filter2" name="Filter2" required>
+            </div>
+            <div class="form-group">
+                <label for="pwd">Candidate Key 3</label>
+                <input type="text"  placeholder="ex. make_is_common" class="form-control" id="Filter3" name="Filter3" required>
+            </div>
+            <a href='@Url.Action("WriteHeavy", "Home")'>
+            <div class="text-center">
+            <input type="submit" value="Submit" class="btn btn-primary btn-space" onclick="showDiv()" style="padding-right: 7px;">
+            </div>
+            </a>
+
+            <div class="center" id="loadingGif" style="display:none">
+                <img class="center" src="https://media.giphy.com/media/3oEjI6SIIHBdRxXI40/giphy.gif" width="150" height="150">
+            </div>
+        </form>
+       </div>
+    </div>
+</div>
+
+
