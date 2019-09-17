@@ -21,22 +21,15 @@ namespace PartitionKeyAdvisor.Controllers
     using Models;
     using Nancy.Json;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using System.Collections;
     using System.Text.RegularExpressions;
     using System.Threading;
 
     public class HomeController : Controller {
-
-        IConfiguration _iconfiguration;
-
-        public HomeController(IConfiguration iconfiguration)
-        {
-            _iconfiguration = iconfiguration;
-        }
        
         public ActionResult Index() {
             return View();
-
         }
 
         //normalizes any input dataset 
@@ -91,14 +84,13 @@ namespace PartitionKeyAdvisor.Controllers
         }
 
         public async Task<ActionResult> WriteHeavy(FormModel model) {
-            string _endpoint = _iconfiguration.GetSection("cosmosSettings").GetSection("endpointUri").Value;
-            string _primaryKey = _iconfiguration.GetSection("cosmosSettings").GetSection("primaryKey").Value;
+            string _endpoint = model.ConnectionString;
+            string _primaryKey = model.ReadOnlyKey;
 
             try
             {
                 using (DocumentClient client = new DocumentClient(new Uri(_endpoint), _primaryKey))
                 {
-
                     Database targetDatabase = new Database { Id = model.Database };
                     targetDatabase = await client.CreateDatabaseIfNotExistsAsync(targetDatabase);
                     await client.OpenAsync();
@@ -123,15 +115,18 @@ namespace PartitionKeyAdvisor.Controllers
                     var listOfDocumentDictionaries = new List<Dictionary<string, int>>();
                     var listOfDistinctValues = new List<Dictionary<string, int>>();
                     var list = documentList[0].ToString();
-                    var dictionaryOfSchema = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(list);
-
+                    var valueTypesThatGroupPoorly = new[] {"Object", "Array"};
+                    var dictionaryOfSchema = JObject.Parse(list)
+                                                    .Properties()
+                                                    .Where(p => !valueTypesThatGroupPoorly.Contains(p.Value.Type.ToString()))
+                                                    .Select(p => p.Name)
+                                                    .ToList();
 
                     var filterArray = new string[] { model.Filter1, model.Filter2, model.Filter3 };
 
                     //groups values by distinctness per property for schema discovery
-                    int counter = 0;
                     var overallUniquenessResults = new int[3];
-                    foreach (var i in dictionaryOfSchema.Keys)
+                    foreach (var i in dictionaryOfSchema)
                     {
                         var groupValues = documentDictionary.Values.GroupBy(x => x.GetPropertyValue<string>(i)).Distinct().Count();
                         viewDataDictionaryforDcount.Add(i, groupValues);
@@ -147,8 +142,6 @@ namespace PartitionKeyAdvisor.Controllers
                         {
                             overallUniquenessResults[2] = groupValues;
                         }
-                        counter++;
-
                     }
 
                     //calculates Distinctness/sec and cardinality per filter/candidate partition key inputed by user
