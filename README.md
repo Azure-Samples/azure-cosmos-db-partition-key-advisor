@@ -3,6 +3,8 @@
 
 Data analyzing tool for helping customers choose the best partition key for their Cosmos DB collections.
 
+[<img src="https://i.ytimg.com/vi/9v6WbCOzPiM/maxresdefault.jpg" width="50%">](https://www.youtube.com/watch?v=9v6WbCOzPiM "Video Demo: Partition Key Advisor")
+
 ## Features
 
 This project framework provides the following features:
